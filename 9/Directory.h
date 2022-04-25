@@ -1,4 +1,4 @@
-// author: choleraplague
+// author: choleraplague aka sideshowbobgot
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -34,6 +34,8 @@ struct Directory
     //  The number of hard links to the file.
     //  This count keeps track of how many directories have entries for this file.
     nlink_t n_link;
+    //  Specifies the amount of files the directory has
+    int files_num;
     //  Pointer to parent directory
     struct Directory *parent_dir;
     //  Pointer to itself
@@ -41,19 +43,35 @@ struct Directory
     //  Array of subdirectories
     struct Directory **sub_dirs;
     //  Array of files in the directory
-    struct File *files;
+    struct File **files;
 };
 struct File
 {
-    char *path;
+    //  !!!NOTE!!!    To see what these attributes mean     !!!NOTE!!!
+    //  !!!NOTE!!!    see the next link:                    !!!NOTE!!!
+    //  https://www.gnu.org/software/libc/manual/html_node/Attribute-Meanings.html
+
+    //  Specifies the name of the file.
     char *name;
+    //  The user ID of the file’s owner.
     uid_t uid;
+    //  The group ID of the file.
     gid_t gid;
+    //  This is the last access time for the file.
     time_t atime;
+    //  This is the time of the last modification to the contents of the file.
     time_t mtime;
+    //  Specifies the mode of the file.
+    //  This includes file type informationand the file permission bits
     mode_t mode;
+    //  The number of hard links to the file.
+    //  This count keeps track of how many directories have entries for this file.
     nlink_t n_link;
+    //  Specifies the size of the file
     off_t size;
+    //  Specifies the content of the file
+    char *content;
+    //  Pointer to parent directory
     struct Directory *parent_dir;
 };
 struct Directory *root_dir;

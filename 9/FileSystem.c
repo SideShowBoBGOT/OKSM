@@ -19,7 +19,7 @@ int FileSystemGETATTR(const char *path, struct stat *st)
 int FileSystemMKDIR(const char *path, mode_t mode)
 {
     // get names of directories separately
-    int dir_names_num = 2;
+    int dir_names_num = 0;
     char **dir_names = DirectoryParsePath(path, &dir_names_num);
     // find parent directory
     dir_names_num -= 1;
@@ -27,11 +27,36 @@ int FileSystemMKDIR(const char *path, mode_t mode)
     struct Directory *parent_dir = DirectoryFindDir(parent_path);
     // create new instance of Directory
     struct Directory *new_sub_dir = DirectoryInit(parent_dir, dir_names[dir_names_num]);
-    new_sub_dir->mode = 0777 | S_IFDIR;
+    new_sub_dir->mode = mode | S_IFDIR;
     // add subdirectory to subdirectories array of parent directory
     DirectoryAddSubDir(parent_dir, new_sub_dir);
     // free memory allocated for dir_names
-    dir_names_num++;
+    for (int i = 0; i < dir_names_num - 1; i++)
+    {
+        free(dir_names[i]);
+    }
+    if (dir_names_num)
+    {
+        free(dir_names);
+    }
+    // free memoty allocated for parent path
+    free(parent_path);
+    return 0;
+}
+int FileSystemMKNOD(const char *path, mode_t mode, dev_t rdev)
+{
+    // get names of directories separately
+    int dir_names_num = 0;
+    char **dir_names = DirectoryParsePath(path, &dir_names_num);
+    // find parent directory
+    dir_names_num -= 1;
+    char *parent_path = DirectoryReParsePath(dir_names, dir_names_num);
+    struct Directory *parent_dir = DirectoryFindDir(parent_path);
+    // create new instance of Directory
+    struct File *new_file = DirectoryFileInit(parent_dir, dir_names[dir_names_num]);
+    new_file->mode = mode | S_IFREG;
+    // add subdirectory to subdirectories array of parent directory
+    DirectoryAddFile(parent_dir, new_file);
     // free memory allocated for dir_names
     for (int i = 0; i < dir_names_num - 1; i++)
     {

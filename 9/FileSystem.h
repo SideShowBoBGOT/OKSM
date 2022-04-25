@@ -1,3 +1,4 @@
+// author: choleraplague aka sideshowbobgot
 #define FUSE_USE_VERSION 30
 
 #include <fuse.h>

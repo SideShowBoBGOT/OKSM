@@ -17,7 +17,7 @@ struct Directory *DirectoryInit(struct Directory *parent_dir, const char *name)
     //  Function to initializing pointer to instance of struct Directory
     //  arguments:
     //          1) parent_dir   struct Directory*   parent directory
-    //          2) str          const char*         name of the future directory
+    //          2) name         const char*         name of the future directory
     //  result:
     //          new_dir         struct Directory*      new directory
 
@@ -30,9 +30,33 @@ struct Directory *DirectoryInit(struct Directory *parent_dir, const char *name)
     new_dir->atime = time(NULL);
     new_dir->mtime = time(NULL);
     new_dir->n_link = 2;
+    new_dir->files_num = 0;
     new_dir->mode = S_IFDIR | 0777;
 
     return new_dir;
+}
+struct File *DirectoryFileInit(struct Directory *parent_dir, const char *name)
+{
+    //  Function to initializing pointer to instance of struct File
+    //  arguments:
+    //          1) parent_dir   struct File*        parent directory
+    //          2) name         const char*         name of the future file
+    //  result:
+    //          new_file         struct Directory*      new file
+
+    struct File *new_file = (struct File *)malloc(sizeof(struct File));
+    new_file->parent_dir = parent_dir;
+    new_file->name = DirectoryGiveStr(name);
+    new_file->uid = getuid();
+    new_file->gid = getgid();
+    new_file->atime = time(NULL);
+    new_file->mtime = time(NULL);
+    new_file->n_link = 1;
+    new_file->content = NULL;
+    new_file->size = 0;
+    new_file->mode = S_IFREG | 0777;
+
+    return new_file;
 }
 struct Directory *DirectoryFindDir(const char *path)
 {
@@ -113,7 +137,7 @@ char **DirectoryParsePath(const char *path, int *length)
         }
         path_c1++;
     }
-    char **names;
+    char **names = NULL;
     if ((*length))
     {
         names = (char **)malloc(sizeof(char *) * (*length));
@@ -122,12 +146,13 @@ char **DirectoryParsePath(const char *path, int *length)
             if ((*path_c2) != '/')
             {
                 names[index] = (char *)malloc(sizeof(char) * 255);
+                names[index][0] = '\0';
                 while ((*path_c2) != '/' && (*path_c2) != '\0')
                 {
                     char buf[2];
                     buf[0] = (*path_c2);
                     buf[1] = '\0';
-                    names[index] = strcat(names[index], buf);
+                    strcat(names[index], buf);
                     path_c2++;
                 }
                 path_c2--;
@@ -151,7 +176,8 @@ char *DirectoryReParsePath(const char *const *dir_names, int dir_names_num)
     //          result: path = "/baz/bar"
 
     char *path = (char *)malloc(sizeof(char) * 255);
-    strcat(path, "/");
+    path[0] = '/';
+    path[1] = '\0';
     for (int i = 0; i < dir_names_num; i++)
     {
         if (i == 0)
@@ -164,28 +190,6 @@ char *DirectoryReParsePath(const char *const *dir_names, int dir_names_num)
         }
     }
     return path;
-}
-struct File *FileInit(struct Directory *parent_dir, const char *name)
-{
-    //  Function to initializing pointer to instance of struct File
-    //  arguments:
-    //          1) parent_dir   struct File*        parent directory
-    //          2) str          const char*         name of the future file
-    //  result:
-    //          new_file        struct File*        new file
-
-    struct File *new_file = (struct File *)malloc(sizeof(struct File));
-    new_file->parent_dir = parent_dir;
-    new_file->name = DirectoryGiveStr(name);
-    new_file->uid = getuid();
-    new_file->gid = getgid();
-    new_file->atime = time(NULL);
-    new_file->mtime = time(NULL);
-    new_file->n_link = 1;
-    new_file->size = 1024;
-    new_file->mode = S_IFREG | 0755;
-
-    return new_file;
 }
 void DirectoryAddSubDir(struct Directory *parent_dir, struct Directory *new_sub_dir)
 {
@@ -214,4 +218,32 @@ void DirectoryAddSubDir(struct Directory *parent_dir, struct Directory *new_sub_
     new_sub_dirs[parent_dir->n_link - 2 - 1] = new_sub_dir;
     // assign new array of subdirectories to parent directory`s one
     parent_dir->sub_dirs = new_sub_dirs;
+}
+void DirectoryAddFile(struct Directory *parent_dir, struct File *new_file)
+{
+    //  Function to adding to the array of files of the parent directory
+    //  the new file
+    //  arguments:
+    //          1) parent_dir           struct Directory*        parent directory
+    //          2) new_file             struct Directory*        new file
+    //  result:
+    //          void
+
+    // increment number of files
+    parent_dir->files_num++;
+    struct File **new_files = (struct File **)malloc(sizeof(struct File *) * parent_dir->files_num);
+    // allocate old array of files into new one
+    for (int i = 0; i < parent_dir->files_num - 1; i++)
+    {
+        new_files[i] = parent_dir->files[i];
+    }
+    // deallocate old array of subdirs if it existed before
+    if (parent_dir->files_num - 1)
+    {
+        free(parent_dir->files);
+    }
+    // add new subdirectory to array of subdirectories of parent directory
+    new_files[parent_dir->files_num - 1] = new_file;
+    // assign new array of subdirectories to parent directory`s one
+    parent_dir->files = new_files;
 }
