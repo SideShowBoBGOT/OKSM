@@ -81,6 +81,7 @@ struct Directory *DirectoryInit(struct Directory *parent_dir, const char *name);
 char **DirectoryParsePath(const char *path, int *length);
 char *DirectoryReParsePath(const char *const *dir_names, int dir_names_num);
 void DirectoryAddSubDir(struct Directory *parent_dir, struct Directory *new_sub_dir);
-struct File *FileInit(struct Directory *parent_dir, const char *name);
-
+struct File *DirectoryFileInit(struct Directory *parent_dir, const char *name);
+struct File *DirectoryFindFile(const char *path);
+void DirectoryAddFile(struct Directory *parent_dir, struct File *new_file);
 #endif DIRECTORY_H_INCLUDED

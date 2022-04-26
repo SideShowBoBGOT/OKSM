@@ -5,6 +5,9 @@ struct fuse_operations FileSystemOperations = {
     .getattr = FileSystemGETATTR,
     .readdir = FileSystemREADDIR,
     .mkdir = FileSystemMKDIR,
+    .mknod = FileSystemMKNOD,
+    .write = FileSystemWRITE,
+    .read = FileSystemREAD,
 };
 int main(int argc, char *argv[])
 {

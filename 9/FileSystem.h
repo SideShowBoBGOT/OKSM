@@ -20,5 +20,8 @@
 int FileSystemGETATTR(const char *path, struct stat *st);
 int FileSystemMKDIR(const char *path, mode_t mode);
 int FileSystemREADDIR(const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi);
+int FileSystemMKNOD(const char *path, mode_t mode, dev_t rdev);
+int FileSystemREAD(const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi);
+int FileSystemWRITE(const char *path, const char *buffer, size_t size, off_t offset, struct fuse_file_info *info);
 
 #endif FILE_SYSTEM_H_INCLUDED
