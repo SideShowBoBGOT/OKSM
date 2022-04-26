@@ -32,6 +32,9 @@ struct Directory *DirectoryInit(struct Directory *parent_dir, const char *name)
     new_dir->n_link = 2;
     new_dir->files_num = 0;
     new_dir->mode = S_IFDIR | 0777;
+    new_dir->sub_dirs = NULL;
+    new_dir->files = NULL;
+    new_dir->links = NULL;
 
     return new_dir;
 }
@@ -43,7 +46,7 @@ struct File *DirectoryFileInit(struct Directory *parent_dir, const char *name)
     //          2) name         const char*         name of the future file
     //  result:
     //          new_file        struct File*        new file
-    printf("FileInit: check 1\n");
+
     struct File *new_file = (struct File *)malloc(sizeof(struct File));
     new_file->parent_dir = parent_dir;
     new_file->name = DirectoryGiveStr(name);
@@ -55,9 +58,32 @@ struct File *DirectoryFileInit(struct Directory *parent_dir, const char *name)
     new_file->content = NULL;
     new_file->size = 1024;
     new_file->mode = S_IFREG | 0777;
-    printf("FileInit: check 2\n");
 
     return new_file;
+}
+struct Link *DirectoryLinkInit(struct Directory *parent_dir, const char *name, const char *link_to)
+{
+    //  Function to initializing pointer to instance of struct Link
+    //  arguments:
+    //          1) parent_dir   struct link*        parent directory
+    //          2) name         const char*         name of the future link
+    //  result:
+    //          new_link        struct link*        new link
+
+    struct Link *new_link = (struct Link *)malloc(sizeof(struct Link));
+    new_link->parent_dir = parent_dir;
+    new_link->name = DirectoryGiveStr(name);
+    new_link->uid = getuid();
+    new_link->gid = getgid();
+    new_link->atime = time(NULL);
+    new_link->mtime = time(NULL);
+    new_link->n_link = 1;
+    new_link->link_to = NULL;
+    new_link->size = 0;
+    new_link->mode = S_IFLNK | 0777;
+    new_link->link_to = DirectoryGiveStr(link_to);
+
+    return new_link;
 }
 struct Directory *DirectoryFindDir(const char *path)
 {
@@ -119,7 +145,7 @@ struct File *DirectoryFindFile(const char *path)
     //  !!!NOTE!!!                                                      !!!NOTE!!!
     //  !!!NOTE!!!          If path does not exist, file = NULL         !!!NOTE!!!
     //  !!!NOTE!!!                                                      !!!NOTE!!!
-    printf("FindFile: check 1\n");
+
     // Get names of directories separately
     int dir_names_num;
     char **dir_names = DirectoryParsePath(path, &dir_names_num);
@@ -127,31 +153,18 @@ struct File *DirectoryFindFile(const char *path)
     char *parent_path = DirectoryReParsePath(dir_names, dir_names_num - 1);
     struct Directory *parent_dir = DirectoryFindDir(parent_path);
     struct File *file = NULL;
-    printf("\n\n");
-    printf(parent_dir->name);
-    printf("\n\n");
-    printf("files_num: %d", parent_dir->files_num);
-    printf("\n\n");
-    printf("dir_names_num: %d", dir_names_num);
-    printf("\n\n");
+
     //  Find file in loop
     for (int i = 0; i < parent_dir->files_num && dir_names != NULL; i++)
     {
-        printf("\n");
-        printf(dir_names[dir_names_num - 1]);
+
         if (strcmp(parent_dir->files[i]->name, dir_names[dir_names_num - 1]) == 0)
         {
             file = parent_dir->files[i];
-            if (file->content != NULL)
-            {
-                printf("\n\n");
-                printf(file->content);
-                printf("\n\n");
-            }
             break;
         }
     }
-    printf("FindFile: check 2\n");
+
     // Free memory allocated for dir_names
     for (int i = 0; i < dir_names_num; i++)
     {
@@ -162,8 +175,50 @@ struct File *DirectoryFindFile(const char *path)
         free(dir_names);
     }
 
-    printf("FindFile: check 3\n");
     return file;
+}
+struct Link *DirectoryFindLink(const char *path)
+{
+    //  Function to find pointer to instance of struct Link
+    //  by ints path
+    //  arguments:
+    //          1) path     const char*             full path to the certain link
+    //  result:
+    //          link         struct Link*      found link
+    //  !!!NOTE!!!                                                      !!!NOTE!!!
+    //  !!!NOTE!!!          If path does not exist, link = NULL         !!!NOTE!!!
+    //  !!!NOTE!!!                                                      !!!NOTE!!!
+
+    // Get names of directories separately
+    int dir_names_num;
+    char **dir_names = DirectoryParsePath(path, &dir_names_num);
+    // Find parent directory
+    char *parent_path = DirectoryReParsePath(dir_names, dir_names_num - 1);
+    struct Directory *parent_dir = DirectoryFindDir(parent_path);
+    struct Link *link = NULL;
+
+    //  Find link in loop
+    for (int i = 0; i < parent_dir->links_num && dir_names != NULL; i++)
+    {
+
+        if (strcmp(parent_dir->links[i]->name, dir_names[dir_names_num - 1]) == 0)
+        {
+            link = parent_dir->links[i];
+            break;
+        }
+    }
+
+    // Free memory allocated for dir_names
+    for (int i = 0; i < dir_names_num; i++)
+    {
+        free(dir_names[i]);
+    }
+    if (dir_names_num)
+    {
+        free(dir_names);
+    }
+
+    return link;
 }
 char **DirectoryParsePath(const char *path, int *length)
 {
@@ -232,11 +287,11 @@ char *DirectoryReParsePath(const char *const *dir_names, int dir_names_num)
     //  Example 1:
     //          input:  dir_names[0] = "baz", dir_names[1] = "bar", dir_names_num = 2
     //          result: path = "/baz/bar"
-    printf("ReParse: check 1\n");
+
     char *path = (char *)malloc(sizeof(char) * 255);
     path[0] = '/';
     path[1] = '\0';
-    printf("ReParse: check 2\n");
+
     for (int i = 0; i < dir_names_num; i++)
     {
         if (i == 0)
@@ -248,9 +303,7 @@ char *DirectoryReParsePath(const char *const *dir_names, int dir_names_num)
             strcat(strcat(path, "/"), dir_names[i]);
         }
     }
-    printf("ReParse: check 3\n");
-    printf(path);
-    printf("ReParse: check 4\n");
+
     return path;
 }
 void DirectoryAddSubDir(struct Directory *parent_dir, struct Directory *new_sub_dir)
@@ -287,13 +340,11 @@ void DirectoryAddFile(struct Directory *parent_dir, struct File *new_file)
     //  the new file
     //  arguments:
     //          1) parent_dir           struct Directory*        parent directory
-    //          2) new_file             struct Directory*        new file
+    //          2) new_file             struct File*             new file
     //  result:
     //          void
 
     // increment number of files
-    printf("\nAddFile: check 1\n");
-    printf(parent_dir->name);
 
     parent_dir->files_num++;
     struct File **new_files = (struct File **)malloc(sizeof(struct File *) * parent_dir->files_num);
@@ -302,17 +353,48 @@ void DirectoryAddFile(struct Directory *parent_dir, struct File *new_file)
     {
         new_files[i] = parent_dir->files[i];
     }
-    printf("AddFile: check 2\n");
-    // deallocate old array of subdirs if it existed before
+
+    // deallocate old array of files if it existed before
     if (parent_dir->files_num - 1)
     {
         free(parent_dir->files);
     }
-    printf("AddFile: check 3\n");
-    // add new subdirectory to array of subdirectories of parent directory
+
+    // add new file to array of files of parent directory
     new_files[parent_dir->files_num - 1] = new_file;
-    printf("AddFile: check 4\n");
-    // assign new array of subdirectories to parent directory`s one
+
+    // assign new array of files to parent directory`s one
     parent_dir->files = new_files;
-    printf("AddFile: check 5\n");
+}
+void DirectoryAddLink(struct Directory *parent_dir, struct Link *new_link)
+{
+    //  Function to adding to the array of links of the parent directory
+    //  the new link
+    //  arguments:
+    //          1) parent_dir           struct Directory*        parent directory
+    //          2) new_link             struct Link*             new link
+    //  result:
+    //          void
+
+    // increment number of links
+
+    parent_dir->links_num++;
+    struct Link **new_links = (struct link **)malloc(sizeof(struct Link *) * parent_dir->links_num);
+    // allocate old array of links into new one
+    for (int i = 0; i < parent_dir->links_num - 1; i++)
+    {
+        new_links[i] = parent_dir->links[i];
+    }
+
+    // deallocate old array of links if it existed before
+    if (parent_dir->links_num - 1)
+    {
+        free(parent_dir->links);
+    }
+
+    // add new link to array of links of parent directory
+    new_links[parent_dir->links_num - 1] = new_link;
+
+    // assign new array of links to parent directory`s one
+    parent_dir->links = new_links;
 }

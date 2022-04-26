@@ -8,6 +8,9 @@ struct fuse_operations FileSystemOperations = {
     .mknod = FileSystemMKNOD,
     .write = FileSystemWRITE,
     .read = FileSystemREAD,
+    .chmod = FileSystemCHMOD,
+    .symlink = FileSystemSYMLINK,
+    .readlink = FileSystemREADLINK,
 };
 int main(int argc, char *argv[])
 {

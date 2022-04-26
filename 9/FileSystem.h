@@ -23,5 +23,8 @@ int FileSystemREADDIR(const char *path, void *buffer, fuse_fill_dir_t filler, of
 int FileSystemMKNOD(const char *path, mode_t mode, dev_t rdev);
 int FileSystemREAD(const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi);
 int FileSystemWRITE(const char *path, const char *buffer, size_t size, off_t offset, struct fuse_file_info *info);
+int FileSystemCHMOD(const char *path, mode_t mode);
+int FileSystemSYMLINK(const char *target_path, const char *link_path);
+int FileSystemREADLINK(const char *path, char *buffer, size_t size);
 
 #endif FILE_SYSTEM_H_INCLUDED
