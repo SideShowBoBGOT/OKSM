@@ -68,19 +68,12 @@ int FileSystemSYMLINK(const char *target_path, const char *link_path)
 int FileSystemREADLINK(const char *path, char *buffer, size_t size)
 {
     struct Link *link = DirectoryFindLink(path);
-    if (link != NULL && link->link_to != NULL)
+    if (link != NULL)
     {
-        printf("\n\n");
-        printf("%d", size);
-        printf("\n\n");
-        char *link_to = link->link_to;
-        printf("\n\n");
-        printf(link_to);
-        printf("\n\n");
-        strcpy(buffer, link->link_to);
-        return size;
+        memcpy(buffer, link->link_to, size);
+        return 0;
     }
-    return -1;
+    return -errno;
 }
 int FileSystemMKDIR(const char *path, mode_t mode)
 {
@@ -139,6 +132,8 @@ int FileSystemREAD(const char *path, char *buffer, size_t size, off_t offset, st
     struct File *file = DirectoryFindFile(path);
     if (file != NULL && file->content != NULL)
     {
+        printf("\n\nsize: %d\n\n", size);
+        printf("\n\noffset: %d\n\n", offset);
         char *content = file->content;
         memcpy(buffer, content + offset, size);
         return strlen(content) - offset;
@@ -180,6 +175,7 @@ int FileSystemWRITE(const char *path, const char *buffer, size_t size, off_t off
         }
 
         strcat(file->content, buffer);
+        file->size = strlen(file->content);
     }
     return size;
 }
@@ -189,6 +185,11 @@ int FileSystemREADDIR(const char *path, void *buffer, fuse_fill_dir_t filler, of
     filler(buffer, "..", NULL, 0); // Parent Directory
 
     struct Directory *dir = DirectoryFindDir(path);
+    struct Link *link = DirectoryFindLink(path);
+    if (dir == NULL)
+    {
+        dir = DirectoryFindDir(link->link_to);
+    }
     if (dir != NULL)
     {
         for (int i = 0; i < dir->n_link - 2; i++)

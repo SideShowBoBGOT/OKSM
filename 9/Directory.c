@@ -56,7 +56,7 @@ struct File *DirectoryFileInit(struct Directory *parent_dir, const char *name)
     new_file->mtime = time(NULL);
     new_file->n_link = 1;
     new_file->content = NULL;
-    new_file->size = 1024;
+    new_file->size = 0;
     new_file->mode = S_IFREG | 0777;
 
     return new_file;
@@ -78,10 +78,9 @@ struct Link *DirectoryLinkInit(struct Directory *parent_dir, const char *name, c
     new_link->atime = time(NULL);
     new_link->mtime = time(NULL);
     new_link->n_link = 1;
-    new_link->link_to = NULL;
-    new_link->size = 0;
     new_link->mode = S_IFLNK | 0777;
     new_link->link_to = DirectoryGiveStr(link_to);
+    new_link->size = strlen(new_link->link_to) - 1;
 
     return new_link;
 }
