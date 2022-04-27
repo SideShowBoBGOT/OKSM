@@ -8,8 +8,9 @@ char *DirectoryGiveStr(const char *str)
     //  result:
     //          new_str      char*          some allocated string
 
-    char *new_str = (char *)malloc(sizeof(char) * 255);
-    new_str = strcat(new_str, str);
+    char *new_str = (char *)malloc(sizeof(char) * (strlen(str) + 1));
+    new_str[0] = '\0';
+    strcat(new_str, str);
     return new_str;
 }
 struct Directory *DirectoryInit(struct Directory *parent_dir, const char *name)
@@ -55,7 +56,7 @@ struct File *DirectoryFileInit(struct Directory *parent_dir, const char *name)
     new_file->atime = time(NULL);
     new_file->mtime = time(NULL);
     new_file->n_link = 1;
-    new_file->content = NULL;
+    new_file->content = DirectoryGiveStr("");
     new_file->size = 0;
     new_file->mode = S_IFREG | 0777;
 

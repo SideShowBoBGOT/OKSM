@@ -132,8 +132,6 @@ int FileSystemREAD(const char *path, char *buffer, size_t size, off_t offset, st
     struct File *file = DirectoryFindFile(path);
     if (file != NULL && file->content != NULL)
     {
-        printf("\n\nsize: %d\n\n", size);
-        printf("\n\noffset: %d\n\n", offset);
         char *content = file->content;
         memcpy(buffer, content + offset, size);
         return strlen(content) - offset;
@@ -168,13 +166,24 @@ int FileSystemWRITE(const char *path, const char *buffer, size_t size, off_t off
     struct File *file = DirectoryFindFile(path);
     if (file != NULL)
     {
-        if (file->content == NULL)
-        {
-            file->content = (char *)malloc(sizeof(char));
-            file->content[0] = '\0';
-        }
+        char *new_content = DirectoryGiveStr(buffer);
+        char *old_content = DirectoryGiveStr(file->content);
 
-        strcat(file->content, buffer);
+        int i = 0;
+        for (; i < strlen(buffer) && buffer[i] != '\n'; i++)
+        {
+            new_content[i] = buffer[i];
+        }
+        new_content[i] = '\n';
+        new_content[i + 1] = '\0';
+
+        file->content = (char *)malloc(sizeof(char) * (strlen(new_content) + strlen(old_content) + 1));
+        file->content[0] = '\0';
+
+        strcat(file->content, old_content);
+        strcat(file->content, new_content);
+        free(new_content);
+        free(old_content);
         file->size = strlen(file->content);
     }
     return size;
